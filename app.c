@@ -1,6 +1,5 @@
-#ifndef LINES_C
 #include "lines.c"
-#endif
+#include "terminal.c"
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -39,8 +38,7 @@ Cursor* new_cursor() {
 typedef enum {
     EDIT,
     MOVE
-} AppMode;
-
+}AppMode;
 typedef struct {
     LineList* line_list;
     Cursor* cursor;
@@ -53,6 +51,7 @@ App* new_app(LineList* line_list) {
     if(line_list == NULL){
         line_list = new_line_list();
     }
+    configure_terminal();
     App* app = malloc(sizeof(App));
     app -> line_list = line_list;
     app -> cursor = new_cursor();
@@ -200,31 +199,47 @@ void move_cursor_right(App* app) {
 
 Direction convert_to_direction(char buf[]){
     if(strcmp(buf, "\033[A") == 0){
-        puts("Direction up");
         return UP;
     }
     else if(strcmp(buf, "\033[B") == 0){
-        puts("Direction down");
         return DOWN;
     }
     else if(strcmp(buf, "\033[D") == 0){
-        puts("Direction left");
         return LEFT;
     }
     else if(strcmp(buf, "\033[C") == 0){
-        puts("Direction right");
         return RIGHT;
     }
     puts("Couldn't convert to direction!");
-    exit(1);
+    exit(-1);
 }
 
+void handle_move(App* app, Direction dir) {
+    if(dir == UP){
+        terminal_cursor_up();
+    }
+    else if(dir == DOWN){
+        terminal_cursor_down();
+    }
+    else if(dir == LEFT){
+        terminal_cursor_left();
+    }
+    else if(dir == RIGHT){
+        terminal_cursor_right();
+    }
+}
 
+void handle_edit(App* app, char buf[]) {
+    write_at_cursor(buf);
+}
 void handle_input(App* app, char buf[])
-{  
+{
     int len = strlen(buf);
     if(len == 3) {
         Direction dir = convert_to_direction(buf);
+        handle_move(app, dir);
+    } else {
+        handle_edit(app, buf); // backspace doesnt work! - need to rerender it manually
     }
 }
 

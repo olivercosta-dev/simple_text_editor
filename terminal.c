@@ -36,6 +36,37 @@ void clear_line_from_cursor_left() {
     printf("\033[1K");
 }
 
+// ANSI Escape Codes for Arrow keys.
+// All of these are 3 bytes long.
+
+#define CURSOR_UP_CMD "\033[A"
+#define CURSOR_DOWN_CMD "\033[B"
+#define CURSOR_RIGHT_CMD "\033[C"
+#define CURSOR_LEFT_CMD "\033[D"
+
+void terminal_cursor_up() {
+    printf("%s", CURSOR_UP_CMD);
+    fflush(stdout);
+}
+void terminal_cursor_down() {
+    printf("%s", CURSOR_DOWN_CMD);
+    fflush(stdout);
+}
+void terminal_cursor_left() {
+    printf("%s", CURSOR_LEFT_CMD);
+    fflush(stdout);
+
+}
+void terminal_cursor_right() {
+    printf("%s", CURSOR_RIGHT_CMD);
+    fflush(stdout);
+}
+
 void clear_line() {
     printf("\033[2K");
+}
+
+void write_at_cursor(char buf[]){
+    printf("%s", buf);
+    fflush(stdout);
 }

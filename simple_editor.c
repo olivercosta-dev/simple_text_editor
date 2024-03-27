@@ -6,24 +6,12 @@
 #include <unistd.h>
 
 #include "app.c"
-#include "terminal.c"
-
 
 
 
 #define KEY_MODE_SWITCH '\t'
 
-// #define UP 'W'
-// #define DOWN 'S'
-// #define LEFT 'A'
-// #define RIGHT 'D'
 
-// ANSI Escape Codes for Arrow keys.
-// All of these are 3 bytes long.
-#define UP "\033[A"
-#define DOWN "\033[B"
-#define LEFT "\033[D"
-#define RIGHT "\033[C"
 
 
 int main(int argc, char* argv[])
@@ -32,7 +20,6 @@ int main(int argc, char* argv[])
         puts("Incorrect arguments supplied.\nUse: editor filename.txt");
         return 1;
     }
-    configure_terminal();
     char* file_name = argv[1];
     LineList* line_list = new_line_list_from_file(file_name);
     App* app = new_app(line_list);
@@ -46,9 +33,7 @@ int main(int argc, char* argv[])
         if (bytes_read > 0) {
             buf[bytes_read] = '\0'; // Null-terminate the string
         }
-        // print_line_list(app);
         handle_input(app, buf);
-        fflush(stdout);
     }
     return 0;
 }
