@@ -9,6 +9,14 @@
 #define TRUE 1
 #define FALSE 0
 
+typedef enum{
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT
+} Direction;
+
+
 typedef struct {
     int row;
     int col;
@@ -25,6 +33,9 @@ Cursor* new_cursor() {
     return cursor;
 }
 
+
+
+//? This is questionable - The whole appmode thing
 typedef enum {
     EDIT,
     MOVE
@@ -180,55 +191,40 @@ void move_cursor_right(App* app) {
     app -> cursor -> row++;
 }
 
-// void move_cursor(App* app, char input_char) {
-//     switch (input_char)
-//     {
-//         case UP:
-//         {
-//             move_cursor_up(app);
-//             break;
-//         }
-//         case DOWN:
-//         {
-//             move_cursor_down(app);
-//             break;
-//         }
-//         case LEFT:
-//         {
-//             move_cursor_left(app);
-//             break;
-//         }
-//         case RIGHT:
-//         {
-//             move_cursor_right(app);
-//             break;
-//         }
-//         default:
-//             break;
-//     }
-// }
 
-void handle_input(App* app, char input_char)
-{
-    if(input_char == 72){
-        puts("ARROW WAS PRESSED!");
-        exit(-1);
+// #define UP "\033[A"
+// #define DOWN "\033[B"
+// #define RIGHT "\033[C"
+// #define LEFT "\033[D"
+
+
+Direction convert_to_direction(char buf[]){
+    if(strcmp(buf, "\033[A") == 0){
+        puts("Direction up");
+        return UP;
     }
-   switch (app -> mode)
-   {
-        case MOVE:
-        {
-            // move_cursor(app, input_char);
-            break;
-        }
-        case EDIT:
-        {
-
-        }
-        default:
-            break;
-   }
+    else if(strcmp(buf, "\033[B") == 0){
+        puts("Direction down");
+        return DOWN;
+    }
+    else if(strcmp(buf, "\033[D") == 0){
+        puts("Direction left");
+        return LEFT;
+    }
+    else if(strcmp(buf, "\033[C") == 0){
+        puts("Direction right");
+        return RIGHT;
+    }
+    puts("Couldn't convert to direction!");
+    exit(1);
 }
 
 
+void handle_input(App* app, char buf[])
+{  
+    int len = strlen(buf);
+    if(len == 3) {
+        Direction dir = convert_to_direction(buf);
+    }
+}
 

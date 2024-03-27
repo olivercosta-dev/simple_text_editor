@@ -25,10 +25,6 @@
 #define LEFT "\033[D"
 #define RIGHT "\033[C"
 
-void clear_screen() {
-    printf("\033[2J"); // Clear the screen
-    printf("\033\033[H"); // Move cursor to the back "HOME"
-}
 
 int main(int argc, char* argv[])
 {
@@ -40,14 +36,19 @@ int main(int argc, char* argv[])
     char* file_name = argv[1];
     LineList* line_list = new_line_list_from_file(file_name);
     App* app = new_app(line_list);
-    char buf[100];
     print_line_list(app);
+
     // TODO (oliver): WRITE MODE WITH TAB
     while(1) {
-        read(STDIN_FILENO, buf, sizeof(buf));
-        // handle_input(app, c);
-        clear_screen();
-        print_line_list(app);
+        // clear_screen();
+        char buf[100];
+        ssize_t bytes_read = read(STDIN_FILENO, buf, sizeof(buf) - 1); // Leave space for '\0'
+        if (bytes_read > 0) {
+            buf[bytes_read] = '\0'; // Null-terminate the string
+        }
+        // print_line_list(app);
+        handle_input(app, buf);
+        fflush(stdout);
     }
     return 0;
 }
