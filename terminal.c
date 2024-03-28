@@ -30,10 +30,12 @@ void clear_screen() {
 
 void clear_line_from_cursor_right() {
     printf("\033[0K");
+    fflush(stdout);
 }
 
 void clear_line_from_cursor_left() {
     printf("\033[1K");
+    fflush(stdout);
 }
 
 // ANSI Escape Codes for Arrow keys.

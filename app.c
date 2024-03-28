@@ -62,21 +62,7 @@ App* new_app(LineList* line_list) {
 
 // TODO (oliver): Make the arguments the app or something
 void print_line(Line* line, int with_cursor, int cursor_col){
-    if(with_cursor == TRUE) {
-        printf("--->");
-        for(int i = 0; i < strlen(line -> content); i++) {
-            if(i == cursor_col) {
-                printf("|%c", line -> content[i]);
-            }
-            else {
-                printf("%c", line -> content[i]);
-            }
-        }
-        printf("<---\n");
-    }
-    else {
-        printf("%s\n", line -> content);
-    }
+    printf("%s\n", line -> content);
 }
 
 void print_line_list(App* app) {
@@ -160,27 +146,27 @@ void add_char_to_line_at(Line* line, int char_index, char new_char)
         modified_line_content[i] = line -> content[i];
     }
     modified_line_content[line_len + 1] = '\0';
-    free(line->content);
+    free(line -> content);
     line->content = modified_line_content;
 }
 
 // TODO (oliver): Cross-line compability without accessing "bad" memory
-void move_cursor_up(App* app) {
+void app_move_cursor_up(App* app) {
     if(app -> cursor -> row == 0)
         return;
     app->cursor->row--;
 }
-void move_cursor_down(App* app) {
+void app_move_cursor_down(App* app) {
     if(app -> cursor -> row == app -> line_list -> len - 1)
         return;
     app -> cursor->row++;
 }
-void move_cursor_left(App* app) {
+void app_move_cursor_left(App* app) {
     if(app -> cursor -> col == 0)
         return;
     app->cursor->col--;
 }
-void move_cursor_right(App* app) {
+void app_move_cursor_right(App* app) {
     int current_row = app -> cursor -> row;
     char* current_line = app -> line_list -> lines[current_row].content;
     int current_line_len = strlen(current_line);
@@ -213,25 +199,59 @@ Direction convert_to_direction(char buf[]){
     puts("Couldn't convert to direction!");
     exit(-1);
 }
-
+void app_cursor_up(App* app) {
+    app->cursor->row--;
+}
+void app_cursor_down(App* app) {
+    app->cursor->row++;
+}
+void app_cursor_left(App* app) {
+    app->cursor->col--;
+}
+void app_cursor_right(App* app) {
+    app->cursor->col++;
+}
 void handle_move(App* app, Direction dir) {
     if(dir == UP){
         terminal_cursor_up();
+        app_cursor_up(app);
     }
     else if(dir == DOWN){
         terminal_cursor_down();
+        app_cursor_down(app);
     }
     else if(dir == LEFT){
         terminal_cursor_left();
+        app_cursor_left(app);
     }
     else if(dir == RIGHT){
         terminal_cursor_right();
+        app_cursor_right(app);
     }
 }
 
-void handle_edit(App* app, char buf[]) {
-    write_at_cursor(buf);
+void rerender_line(App* app) {
+    // TODO(oliver): rerender it from left or right depending on cursor position compared to the line's length
+    clear_line_from_cursor_right();
+    int cursor_col = app -> cursor -> col;
+    int cursor_row = app -> cursor -> row;
+    printf("%s",  app -> line_list -> lines[cursor_row].content + cursor_col);
+    printf("\033[%d;%dH", cursor_row + 1 ,cursor_col + 1);
+    app -> cursor -> col++;
+    terminal_cursor_right();
+    fflush(stdout);
 }
+
+void handle_edit(App* app, char buf[]) {
+    int cursor_col = app -> cursor -> col;
+    int cursor_row = app -> cursor -> row;
+    
+    // This presumes only ASCII characters
+    add_char_to_line_at(&app -> line_list -> lines[cursor_row], cursor_col, buf[0]);
+    
+    rerender_line(app);
+}
+
 void handle_input(App* app, char buf[])
 {
     int len = strlen(buf);
