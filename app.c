@@ -237,19 +237,27 @@ void rerender_line(App* app) {
     int cursor_row = app -> cursor -> row;
     printf("%s",  app -> line_list -> lines[cursor_row].content + cursor_col);
     printf("\033[%d;%dH", cursor_row + 1 ,cursor_col + 1);
-    app -> cursor -> col++;
-    terminal_cursor_right();
-    fflush(stdout);
 }
 
 void handle_edit(App* app, char buf[]) {
+
     int cursor_col = app -> cursor -> col;
     int cursor_row = app -> cursor -> row;
-    
-    // This presumes only ASCII characters
-    add_char_to_line_at(&app -> line_list -> lines[cursor_row], cursor_col, buf[0]);
-    
-    rerender_line(app);
+    // if it is a backspace
+    if(0x7F == buf[0]){
+        delete_line_char_at(&app -> line_list -> lines[cursor_row], cursor_col);
+        rerender_line(app);
+        terminal_cursor_left();
+        app->cursor->col--;
+        fflush(stdout);
+    } else {
+        // This presumes only ASCII characters
+        add_char_to_line_at(&app -> line_list -> lines[cursor_row], cursor_col, buf[0]);
+        rerender_line(app);
+        terminal_cursor_right();
+        app -> cursor -> col++;
+        fflush(stdout);
+    }
 }
 
 void handle_input(App* app, char buf[])
@@ -259,7 +267,7 @@ void handle_input(App* app, char buf[])
         Direction dir = convert_to_direction(buf);
         handle_move(app, dir);
     } else {
-        handle_edit(app, buf); // backspace doesnt work! - need to rerender it manually
+        handle_edit(app, buf);
     }
 }
 
