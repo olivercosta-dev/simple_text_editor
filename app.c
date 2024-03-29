@@ -151,30 +151,12 @@ void add_char_to_line_at(Line* line, int char_index, char new_char)
 }
 
 // TODO (oliver): Cross-line compability without accessing "bad" memory
-void app_move_cursor_up(App* app) {
-    if(app -> cursor -> row == 0)
-        return;
-    app->cursor->row--;
-}
-void app_move_cursor_down(App* app) {
-    if(app -> cursor -> row == app -> line_list -> len - 1)
-        return;
-    app -> cursor->row++;
-}
-void app_move_cursor_left(App* app) {
-    if(app -> cursor -> col == 0)
-        return;
-    app->cursor->col--;
-}
-void app_move_cursor_right(App* app) {
-    int current_row = app -> cursor -> row;
-    char* current_line = app -> line_list -> lines[current_row].content;
-    int current_line_len = strlen(current_line);
 
-    if(app -> cursor -> col == current_line_len)
-        return;
-    app -> cursor -> row++;
-}
+// void app_move_cursor_down(App* app) {
+//     if(app -> cursor -> row == app -> line_list -> len - 1)
+//         return;
+//     app -> cursor->row++;
+// }
 
 
 // #define UP "\033[A"
@@ -199,33 +181,52 @@ Direction convert_to_direction(char buf[]){
     puts("Couldn't convert to direction!");
     exit(-1);
 }
+
 void app_cursor_up(App* app) {
+  if(app -> cursor -> row != 0) {
     app->cursor->row--;
+    terminal_cursor_up();
+  }
 }
-void app_cursor_down(App* app) {
-    app->cursor->row++;
-}
+
 void app_cursor_left(App* app) {
-    app->cursor->col--;
+    if(app -> cursor -> col != 0) {
+        app->cursor->col--;
+        terminal_cursor_left();
+    }
 }
+
 void app_cursor_right(App* app) {
-    app->cursor->col++;
+    int current_row = app -> cursor -> row;
+    char* current_line = app -> line_list -> lines[current_row].content;
+    int current_line_len = strlen(current_line);
+
+    if(app -> cursor -> col == current_line_len ){
+        return;
+    }
+    app -> cursor -> col++;
+    terminal_cursor_right();
 }
+
+void app_cursor_down(App* app) {
+    if(app -> cursor -> row == app -> line_list -> len - 1){
+        return;
+    }
+    app -> cursor -> row++;
+    terminal_cursor_down();
+}
+
 void handle_move(App* app, Direction dir) {
     if(dir == UP){
-        terminal_cursor_up();
         app_cursor_up(app);
     }
     else if(dir == DOWN){
-        terminal_cursor_down();
         app_cursor_down(app);
     }
     else if(dir == LEFT){
-        terminal_cursor_left();
         app_cursor_left(app);
     }
     else if(dir == RIGHT){
-        terminal_cursor_right();
         app_cursor_right(app);
     }
 }
@@ -247,17 +248,14 @@ void handle_edit(App* app, char buf[]) {
     if(0x7F == buf[0]){
         delete_line_char_at(&app -> line_list -> lines[cursor_row], cursor_col);
         rerender_line(app);
-        terminal_cursor_left();
-        app->cursor->col--;
-        fflush(stdout);
+        app_cursor_left(app);
     } else {
         // This presumes only ASCII characters
         add_char_to_line_at(&app -> line_list -> lines[cursor_row], cursor_col, buf[0]);
         rerender_line(app);
-        terminal_cursor_right();
-        app -> cursor -> col++;
-        fflush(stdout);
+        app_cursor_right(app);
     }
+    fflush(stdout);
 }
 
 void handle_input(App* app, char buf[])
