@@ -23,13 +23,13 @@ int main(int argc, char* argv[])
     char* file_name = argv[1];
     LineList* line_list = new_line_list_from_file(file_name);
     App* app = new_app(line_list);
+    Line* line = new_line("WAZUP THIS IS A NEW LINE BROTHA!");
     clear_screen();
     printf("\033[1;1H");
     print_line_list(app);
     printf("\033[1;1H");
     fflush(stdout);
 
-    // TODO (oliver): WRITE MODE WITH TAB
     while(1) {
         // clear_screen();
         char buf[100];

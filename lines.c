@@ -14,6 +14,22 @@ typedef struct {
     int max_capacity;
 }LineList;
 
+char* strtrim(char* str) {
+    char* end;
+
+    while (isspace((unsigned char)*str)) str++;
+
+    if (*str == 0) {
+        return str;
+    }
+
+    end = str + strlen(str) - 1;
+    while (end > str && isspace((unsigned char)*end)) end--;
+
+    *(end + 1) = '\0';
+
+    return str;
+}
 
 LineList* new_line_list() {
     LineList* line_list = calloc(1, sizeof(LineList));
@@ -24,19 +40,57 @@ LineList* new_line_list() {
     
     return line_list;
 }
+Line* new_line(char* content) {
+    Line* line = malloc(sizeof(Line));
+    if (line == NULL) {
+        puts("Failed to allocated memory for line!");
+        exit(EXIT_FAILURE);
+    }
 
-void add_to_line_list(LineList* line_list, Line* line) {
+    line -> content = malloc(strlen(content) + 1);
+    if (line->content == NULL) {
+        free(line);
+        puts("Failed to allocated memory for line content!");
+        exit(EXIT_FAILURE);
+        return NULL;
+    }
+    strcpy(line -> content, content);
+    strtrim(line->content);
+    return line;
+}
+void increase_line_list_capacity(LineList* line_list){
+    int new_size = line_list -> len + 5;
+    Line* temp_line = realloc(line_list -> lines, sizeof(Line) * new_size);
+    if (temp_line == NULL) {
+        puts("Failed to reallocate memory for lines.");
+        exit(EXIT_FAILURE);
+    }
+    line_list -> lines = temp_line;
+    line_list -> max_capacity = new_size;
+}
+
+void insert_into_line_list(LineList* line_list, Line* line, int insert_position) {
+    if(insert_position < 0 || insert_position > line_list->len){
+        puts("Could not insert into position, index out of bounds");
+        exit(-1);        
+    }
+    if (line_list->len == line_list -> max_capacity) {
+        increase_line_list_capacity(line_list);
+    }
+    for (int i = line_list -> len; i > insert_position; i--) {
+        line_list->lines[i] = line_list->lines[i - 1];
+    }
+
+    line_list->lines[insert_position] = *line;
+    line_list->len++;
+
+}
+
+void append_to_line_list(LineList* line_list, Line* line) {
     line_list -> lines[line_list -> len] = *line;
     line_list -> len++;
     if (line_list -> len == line_list -> max_capacity) {
-        int new_size = line_list -> len + 5;
-        Line* temp_line = realloc(line_list -> lines, sizeof(Line) * new_size);
-        if (temp_line == NULL) {
-            puts("Failed to reallocate memory for lines.");
-            exit(EXIT_FAILURE);
-        }
-        line_list -> lines = temp_line;
-        line_list -> max_capacity = new_size;
+        increase_line_list_capacity(line_list);
     }
 }
 
@@ -70,11 +124,11 @@ void delete_line_char_at(Line* line, int char_index) {
 
 void save_lines_to_file(LineList* line_list, char* filename){
     FILE* file = fopen(filename, "w");
-    puts("Saving line to file...");
+    // puts("Saving line to file...");
     for(int i = 0; i < line_list -> len; i++) {
         fprintf(file, line_list -> lines[i].content);
         fprintf(file, "\n");
     }
-    puts("line saved to file!");
+    // puts("line saved to file!");
     fclose(file);
 }

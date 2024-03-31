@@ -60,65 +60,31 @@ App* new_app(LineList* line_list) {
     return app;
 } 
 
-// TODO (oliver): Make the arguments the app or something
-void print_line(Line* line, int with_cursor, int cursor_col){
+void print_line(Line* line) {
+    if(line->content == NULL){
+        puts("Line content is null.");
+        return;
+    }
     printf("%s\n", line -> content);
 }
 
 void print_line_list(App* app) {
     for (int i = 0; i < app -> line_list -> len; i++) {
-        if(i == app-> cursor -> row) {
-            print_line(&app -> line_list -> lines[i], TRUE, app -> cursor -> col);
-        } else {
-            print_line(&app -> line_list -> lines[i], FALSE, app -> cursor -> col);
-        }
+        print_line(&app -> line_list -> lines[i]);
     }
 }
 
-char* strtrim(char* str) {
-    char* end;
 
-    while (isspace((unsigned char)*str)) str++;
 
-    if (*str == 0) {
-        return str;
-    }
 
-    end = str + strlen(str) - 1;
-    while (end > str && isspace((unsigned char)*end)) end--;
-
-    *(end + 1) = '\0';
-
-    return str;
-}
-
-Line* new_line(char* content) {
-    Line* line = malloc(sizeof(Line));
-    if (line == NULL) {
-        puts("Failed to allocated memory for line!");
-        exit(EXIT_FAILURE);
-    }
-
-    line -> content = malloc(strlen(content) + 1);
-    if (line->content == NULL) {
-        free(line);
-        puts("Failed to allocated memory for line content!");
-        exit(EXIT_FAILURE);
-        return NULL;
-    }
-    int content_length = strlen(content);
-    strcpy(line -> content, content);
-    strtrim(line->content);
-    return line;
-}
-
+// TODO (oliver): put this in the lines.c file
 LineList* new_line_list_from_file(char* filename) {
     FILE* file = fopen(filename, "r");
     char buf[MAX_LINE_SIZE];
     LineList* line_list = new_line_list();
 
     while (fgets(buf, sizeof(buf), file)){
-        add_to_line_list(line_list, new_line(buf));
+        append_to_line_list(line_list, new_line(buf));
     }
     fclose(file);
     return line_list;
@@ -134,6 +100,7 @@ void modify_line_content_ascii(Line* line, int char_index, char new_char){
     line -> content[char_index] = new_char;
 }
 
+// todo add this to lines.c
 void add_char_to_line_at(Line* line, int char_index, char new_char)
 {
     int line_len = strlen(line -> content);
@@ -149,14 +116,6 @@ void add_char_to_line_at(Line* line, int char_index, char new_char)
     free(line -> content);
     line->content = modified_line_content;
 }
-
-// TODO (oliver): Cross-line compability without accessing "bad" memory
-
-// void app_move_cursor_down(App* app) {
-//     if(app -> cursor -> row == app -> line_list -> len - 1)
-//         return;
-//     app -> cursor->row++;
-// }
 
 
 // #define UP "\033[A"
@@ -215,7 +174,7 @@ void app_cursor_down(App* app) {
     app -> cursor -> row++;
     terminal_cursor_down();
 }
-
+// TODO(oliver): Cursor can still go out of bounds, when going up/down w/ different sized lines
 void handle_move(App* app, Direction dir) {
     if(dir == UP){
         app_cursor_up(app);
@@ -239,7 +198,21 @@ void rerender_line(App* app) {
     printf("%s",  app -> line_list -> lines[cursor_row].content + cursor_col);
     printf("\033[%d;%dH", cursor_row + 1 ,cursor_col + 1);
 }
-
+void rerender_lines_cursor_down(App* app) {
+    int cursor_col = app -> cursor -> col;
+    int cursor_row = app -> cursor -> row;
+    clear_lines_from_cursor_down();
+    clear_line();
+    printf("\033[0E");
+    for(int i = app -> cursor -> row + 1; i < app -> line_list->len; i++) {
+        print_line(&app->line_list->lines[i]);
+    }
+  
+    printf("\033[%d;%dH", cursor_row + 1 ,cursor_col + 1);
+    fflush(stdout);
+    // printf("\003");
+    
+}
 void handle_edit(App* app, char buf[]) {
 
     int cursor_col = app -> cursor -> col;
@@ -249,6 +222,12 @@ void handle_edit(App* app, char buf[]) {
         delete_line_char_at(&app -> line_list -> lines[cursor_row], cursor_col);
         rerender_line(app);
         app_cursor_left(app);
+    } else if('\n' == buf[0]){ // if it is an Enter
+        Line* line = new_line("");
+        insert_into_line_list(app->line_list, line, cursor_row);
+        rerender_lines_cursor_down(app);
+    } else if('0' == buf[0]){
+        save_lines_to_file(app->line_list, "file.txt");
     } else {
         // This presumes only ASCII characters
         add_char_to_line_at(&app -> line_list -> lines[cursor_row], cursor_col, buf[0]);

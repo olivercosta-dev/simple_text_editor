@@ -38,6 +38,18 @@ void clear_line_from_cursor_left() {
     fflush(stdout);
 }
 
+void clear_line() {
+    printf("\033[2K");
+}
+
+void clear_lines_from_cursor_down(){
+    printf("\033[0J");
+    fflush(stdout);
+}
+void clear_lines_from_cursor_up(){
+    printf("\033[1J");
+    fflush(stdout);
+}
 // ANSI Escape Codes for Arrow keys.
 // All of these are 3 bytes long.
 
@@ -64,9 +76,6 @@ void terminal_cursor_right() {
     fflush(stdout);
 }
 
-void clear_line() {
-    printf("\033[2K");
-}
 
 void write_at_cursor(char buf[]){
     printf("%s", buf);
