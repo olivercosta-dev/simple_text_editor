@@ -46,6 +46,7 @@ void clear_lines_from_cursor_down(){
     printf("\033[0J");
     fflush(stdout);
 }
+
 void clear_lines_from_cursor_up(){
     printf("\033[1J");
     fflush(stdout);

@@ -141,10 +141,20 @@ Direction convert_to_direction(char buf[]){
     exit(-1);
 }
 
+
+void app_go_to_cursor(App* app){
+    int cursor_col = app -> cursor -> col;
+    int cursor_row = app -> cursor -> row;
+    printf("\033[%d;%dH", cursor_row + 1 ,cursor_col + 1);
+    fflush(stdout);
+}
 void app_cursor_up(App* app) {
   if(app -> cursor -> row != 0) {
     app->cursor->row--;
-    terminal_cursor_up();
+    int col = app->cursor->col;
+    int line_len = strlen(app->line_list->lines[app->cursor->row].content);
+    app->cursor->col = col > line_len ? line_len : col;
+    app_go_to_cursor(app);
   }
 }
 
@@ -172,7 +182,10 @@ void app_cursor_down(App* app) {
         return;
     }
     app -> cursor -> row++;
-    terminal_cursor_down();
+    int col = app->cursor->col;
+    int line_len = strlen(app->line_list->lines[app->cursor->row].content);
+    app->cursor->col = col > line_len ? line_len : col;
+    app_go_to_cursor(app);
 }
 // TODO(oliver): Cursor can still go out of bounds, when going up/down w/ different sized lines
 void handle_move(App* app, Direction dir) {
@@ -208,7 +221,8 @@ void rerender_lines_cursor_down(App* app) {
         print_line(&app->line_list->lines[i]);
     }
   
-    printf("\033[%d;%dH", cursor_row + 1 ,cursor_col + 1);
+    app -> cursor -> col = 0;
+    printf("\033[%d;1H", cursor_row + 1);
     fflush(stdout);
     // printf("\003");
     
@@ -226,8 +240,6 @@ void handle_edit(App* app, char buf[]) {
         Line* line = new_line("");
         insert_into_line_list(app->line_list, line, cursor_row);
         rerender_lines_cursor_down(app);
-    } else if('0' == buf[0]){
-        save_lines_to_file(app->line_list, "file.txt");
     } else {
         // This presumes only ASCII characters
         add_char_to_line_at(&app -> line_list -> lines[cursor_row], cursor_col, buf[0]);
@@ -236,6 +248,9 @@ void handle_edit(App* app, char buf[]) {
     }
     fflush(stdout);
 }
+void handle_save(App* app){
+    save_lines_to_file(app->line_list, "file.txt");
+}
 
 void handle_input(App* app, char buf[])
 {
@@ -243,6 +258,8 @@ void handle_input(App* app, char buf[])
     if(len == 3) {
         Direction dir = convert_to_direction(buf);
         handle_move(app, dir);
+    } else if(buf[0] == 23) { // if ctrl+w was pressed
+        handle_save(app);
     } else {
         handle_edit(app, buf);
     }
