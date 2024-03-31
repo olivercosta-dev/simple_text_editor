@@ -39,6 +39,14 @@ int main(int argc, char* argv[])
         }
         handle_input(app, buf);
     }
+    
+    // Cleanup
+    for(int i = 0; i < app->line_list->len;i++){
+        free(app->line_list->lines[i].content);
+        free(app->line_list->lines[i]);
+    }
+    free(app->line_list);
+    free(app);
     return 0;
 }
 
