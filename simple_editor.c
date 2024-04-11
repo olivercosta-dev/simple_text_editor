@@ -12,8 +12,6 @@
 #define KEY_MODE_SWITCH '\t'
 
 
-
-
 int main(int argc, char* argv[])
 {
     if(argc != 2) {
@@ -42,7 +40,6 @@ int main(int argc, char* argv[])
     // Cleanup
     for(int i = 0; i < app->line_list->len;i++){
         free(app->line_list->lines[i].content);
-        free(app->line_list->lines[i]);
     }
     free(app->line_list);
     free(app);

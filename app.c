@@ -234,6 +234,9 @@ void handle_edit(App* app, char buf[]) {
     // if it is a backspace
     if(0x7F == buf[0]){
         delete_line_char_at(&app -> line_list -> lines[cursor_row], cursor_col);
+        if(strcmp(app -> line_list -> lines[cursor_row].content, "") == 1) {
+            remove_from_line_list(app -> line_list, cursor_row);
+        }
         rerender_line(app);
         app_cursor_left(app);
     } else if('\n' == buf[0]){ // if it is an Enter
